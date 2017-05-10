@@ -10,30 +10,39 @@ df = helper.load_data('/home/dunno/Projects/ods/data/hour_online.csv')
 # helper.plotly_df(df, title="Online users")
 # helper.plot_rolling_mean(df,24*7)
 # helper.plot_double_exp_smoth(df)
-a, b, g = 0.00663426706434, 0.0, 0.0467652042897#hw.train_hw(df) #
 
 '''
 hand-tuned parameters are
     n_pr - number of predictions to make
     slen - length of the SEASON
 '''
+a, b, g = 0.00663426706434, 0.0, 0.0467652042897#hw.train_hw(df) #
 # n_pr = 128
-# model = hw.HoltWinters(df[:-n_pr].values, slen=24*7, alpha=a, beta=b, gamma=g, n_preds=n_pr, confidence=2.56)
-# model.fit_triple_exp_smoth()
+# model = hw.HoltWinters(df[:-n_pr].Users.values, slen=24*7, alpha=a, beta=b, gamma=g, n_preds=n_pr, confidence=1.95)
+# model.fit()
+# preds = model.predict()
 # hw.plotHW(model, df)
-# print('HW mean abs error: ',mean_absolute_error(df.Users.values, model.result))
+# print('HW mean abs error: ',mean_absolute_error(df.Users.values[-n_pr:], preds))
 
 '''
 linear regression
 '''
 
-''' '''
+from sklearn.linear_model import LinearRegression
+
 x_trn, x_tst, y_trn, y_tst = lreg.add_features_mk_split(df, lag_start=12, lag_end=48)
 
-model, pred_tst = lreg.fit_lr(x_trn, x_tst, y_trn, y_tst)
-# err = lreg.performTimeSeriesCV(x_trn, y_trn, 5, model, 'ABS')
+lr = LinearRegression()
+lr.fit(x_trn, y_trn)
+pred_tst = lr.predict(x_tst)
+
+err = lreg.performTimeSeriesCV(x_trn, y_trn, 5, lr, 'ABS')
+print('simple linreg CV error: ', err)
 print('simple linreg mean abs err: ', mean_absolute_error(y_tst, pred_tst))
 
+lreg.plot_simple_lr(x=np.vstack((x_trn, x_tst)), y=np.concatenate((y_trn, y_tst)), model=lr)
+
+'''
 import xgboost as xgb
 
 dtrain = xgb.DMatrix(x_trn, label=y_trn)
@@ -106,3 +115,5 @@ def boost_lr():
 
 # gridCV()
 boost_lr()
+
+'''

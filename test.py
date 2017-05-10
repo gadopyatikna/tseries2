@@ -23,13 +23,12 @@ def train_hw(dataset):
 
         # идем по фолдам, на каждом обучаем модель, строим прогноз на отложенной выборке и считаем ошибку
         for train, test in tscv.split(values):
-            n_pr = len(test)
-            model = HoltWinters(series=values[train], slen=24 * 7, alpha=alpha, beta=beta, gamma=gamma, n_preds=n_pr)
+            model = HoltWinters(series=values[train], slen=24 * 7, alpha=alpha, beta=beta, gamma=gamma,
+                                n_preds=len(test))
+            model.fit_triple_exp_smoth()
 
-            model.fit()
-            predictions = model.predict()
+            predictions = model.result[-len(test):]
             actual = values[test]
-
             error = mean_squared_error(predictions, actual)
             errors.append(error)
 
@@ -64,7 +63,6 @@ class HoltWinters:
     """
 
     def __init__(self, series, slen, alpha, beta, gamma, n_preds, confidence=1.96):
-        self.seasonals_test = {}
         self.series = series
         self.slen = slen
         self.alpha = alpha
@@ -97,7 +95,7 @@ class HoltWinters:
             seasonals[i] = sum_of_vals_over_avg / n_seasons
         return seasonals
 
-    def fit(self):
+    def fit_triple_exp_smoth(self):
         self.result = []
         self.Smooth = []
         self.Season = []
@@ -124,16 +122,24 @@ class HoltWinters:
                               self.scaling_factor *
                               self.PredictedDeviation[0])
 
-        for i in range(1, len(self.series)):
-            val = self.series[i]
-            last_smooth, smooth = smooth, self.alpha * (val - seasonals[i % self.slen]) + (1 - self.alpha) * (
-            smooth + trend)
-            trend = self.beta * (smooth - last_smooth) + (1 - self.beta) * trend
-            seasonals[i % self.slen] = self.gamma * (val - smooth) + (1 - self.gamma) * seasonals[i % self.slen]
-            self.seasonals_test[i % self.slen] = self.gamma * (val - smooth) + (1 - self.gamma) * seasonals[i % self.slen]
-            self.result.append(smooth + trend + seasonals[i % self.slen])
-            # Отклонение рассчитывается в соответствии с алгоритмом Брутлага
-            self.PredictedDeviation.append(self.gamma * np.abs(self.series[i] - self.result[i])
+        for i in range(1, len(self.series) + self.n_preds):
+
+            if i >= len(self.series):  # прогнозируем
+                m = i - len(self.series) + 1
+                self.result.append((smooth + m * trend) + seasonals[i % self.slen])
+                # во время прогноза с каждым шагом увеличиваем неопределенность
+                self.PredictedDeviation.append(self.PredictedDeviation[-1] * 1.01)
+
+            else:
+                val = self.series[i]
+                last_smooth, smooth = smooth, self.alpha * (val - seasonals[i % self.slen]) + (1 - self.alpha) * (
+                smooth + trend)
+                trend = self.beta * (smooth - last_smooth) + (1 - self.beta) * trend
+                seasonals[i % self.slen] = self.gamma * (val - smooth) + (1 - self.gamma) * seasonals[i % self.slen]
+                self.result.append(smooth + trend + seasonals[i % self.slen])
+
+                # Отклонение рассчитывается в соответствии с алгоритмом Брутлага
+                self.PredictedDeviation.append(self.gamma * np.abs(self.series[i] - self.result[i])
                                                + (1 - self.gamma) * self.PredictedDeviation[-1])
 
             self.UpperBond.append(self.result[-1] + self.scaling_factor * self.PredictedDeviation[-1])
@@ -141,18 +147,6 @@ class HoltWinters:
             self.Smooth.append(smooth)
             self.Trend.append(trend)
             self.Season.append(seasonals[i % self.slen])
-
-    def predict(self):
-        smooth = self.Smooth[-1]
-        trend = self.Trend[-1]
-        seasonals = self.seasonals_test
-        # print('seasonals',seasonals)
-
-        for i in range(len(self.series)+self.n_preds):
-            m = i - len(self.series) + 1
-            self.result.append((smooth + m * trend) + seasonals[i % self.slen])
-            self.PredictedDeviation.append(self.PredictedDeviation[-1] * 1.01)
-        return self.result[-self.n_preds:]
 
 
 def plotHW(model, data, title=''):

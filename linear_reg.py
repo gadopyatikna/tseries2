@@ -5,16 +5,22 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 
 from sklearn.linear_model import LinearRegression
 
-def fit_lr(x_trn, x_tst, y_trn, y_tst):
-    # print(x_trn.head())
+# def simple_lr(x_trn, x_tst, y_trn, y_tst):
+#     # print(x_trn.head())
+#
+#     lr = LinearRegression()
+#     lr.fit(x_trn, y_trn)
+#     pred = lr.predict(x_tst)
+#     return lr, pred
 
-    lr = LinearRegression()
-    lr.fit(x_trn, y_trn)
-    pred = lr.predict(x_tst)
+def plot_simple_lr(x, y, model):
+    # print(x.shape)
+    pred = model.predict(x)
+    print('1',pred.shape)
+    print('2',y.shape)
 
-    lr_df = pd.DataFrame(data=np.array([pred, y_tst.values]).T, index=y_tst.index, columns=['prediction', 'observed'])
-    helper.plotly_df(lr_df,'linear regression')
-    return lr, pred
+    lr_df = pd.DataFrame(data=np.array([pred, y]).T, columns=['prediction', 'observed'])
+    helper.plotly_df(lr_df, 'linear regression')
 
 def get_temporal_features(df):
     if type(df.head().index) != pd.tseries.index.DatetimeIndex:
