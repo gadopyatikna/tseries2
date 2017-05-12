@@ -43,7 +43,7 @@ def train_hw(dataset):
     x = [0, 0, 0]
 
     start = time.time()
-    opt = minimize(timeseriesCVscore, x0=x, method="TNC", bounds = ((0, 1), (0, 1), (0, 1)))
+    opt = minimize(timeseriesCVscore, x0=x, method='TNC', bounds = ((0, 1), (0, 1), (0, 1)))
     end = time.time()
 
     alpha_final, beta_final, gamma_final = opt.x
@@ -157,10 +157,12 @@ class HoltWinters:
 
 def plotHW(model, data, title=''):
     index = data.index
-    data = data.Users
-    model.result = np.array(model.result).reshape(1, -1)[0]
-    model.LowerBond = np.array(model.LowerBond).reshape(1, -1)[0]
-    model.UpperBond = np.array(model.UpperBond).reshape(1, -1)[0]
+    colname = data.columns[0]
+    data = data[colname]
+    print(data)
+    # model.result = np.array(model.result).reshape(1, -1)[0]
+    # model.LowerBond = np.array(model.LowerBond).reshape(1, -1)[0]
+    # model.UpperBond = np.array(model.UpperBond).reshape(1, -1)[0]
 
     Anomalies = np.array([np.NaN] * len(data))
     Anomalies[data.values < model.LowerBond] = data.values[data.values < model.LowerBond]

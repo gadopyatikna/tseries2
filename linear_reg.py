@@ -14,10 +14,7 @@ from sklearn.linear_model import LinearRegression
 #     return lr, pred
 
 def plot_simple_lr(x, y, model):
-    # print(x.shape)
     pred = model.predict(x)
-    print('1',pred.shape)
-    print('2',y.shape)
 
     lr_df = pd.DataFrame(data=np.array([pred, y]).T, columns=['prediction', 'observed'])
     helper.plotly_df(lr_df, 'linear regression')
@@ -33,7 +30,10 @@ def get_temporal_features(df):
 def get_means(df, cat_feat, real_feat):
     return df.groupby(cat_feat)[real_feat].mean().to_dict()
 
-def add_features_mk_split(data, y='Users', lag_start=5, lag_end=50, test_size=0.15):
+# TAKES PANDAS.DATAFRAME
+def add_features_mk_split(data, lag_start=5, lag_end=50, test_size=0.15):
+    y = data.columns[0]
+    # print(y)
     test_idx = int(len(data) * (1 - test_size))
 
     # ??
@@ -51,7 +51,7 @@ def add_features_mk_split(data, y='Users', lag_start=5, lag_end=50, test_size=0.
 
     data = data.dropna()
     data = data.reset_index(drop=True)
-
+    # print(data.head())
     x_trn = data.loc[:test_idx].drop([y], axis=1)
     y_trn = data.loc[:test_idx][y]
     x_tst = data.loc[test_idx:].drop([y], axis=1)

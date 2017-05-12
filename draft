@@ -1,3 +1,28 @@
+from statsmodels.stats.outliers_influence import summary_table
+st, data, ss2 = summary_table(lr, alpha=0.05)
+
+fittedvalues = data[:,2]
+predict_mean_se  = data[:,3]
+# predict_mean_ci_low, predict_mean_ci_upp = data[:,4:6].T # do we need it ?
+predict_ci_low, predict_ci_upp = data[:,6:8].T
+print(predict_ci_low)
+
+# confs = t * np.sqrt((s_err / (n - 2)) * (1.0 / n + (np.power((p_x - mean_x), 2) /
+#                                                     ((np.sum(np.power(x, 2))) - n * (np.power(mean_x, 2))))))
+
+xrng = range(len(fittedvalues))
+plt.plot(xrng, y_trn, 'o')
+plt.plot(xrng, fittedvalues, '-', lw=2)
+plt.plot(xrng, predict_ci_low, 'r--', lw=2)
+plt.plot(xrng, predict_ci_upp, 'r--', lw=2)
+# plt.plot(x, predict_mean_ci_low, 'r--', lw=2)
+# plt.plot(x, predict_mean_ci_upp, 'r--', lw=2)
+plt.show()
+
+
+
+
+
 # TODO rewrite
 from sklearn.model_selection import  GridSearchCV
 # cv_params = {
